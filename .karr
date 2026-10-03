@@ -1,0 +1,10 @@
+claude: true
+prompt: |
+  Drain the Net-Async-MikroTik karr board. This is the async IO::Async client for
+  the MikroTik RouterOS REST API — a transport-only layer that delegates all
+  RouterOS semantics to the sibling WWW::MikroTik (../p5-www-mikrotik). Delegate
+  behavior-relevant code to net-async-mikrotik-worker, tests to
+  net-async-mikrotik-test-writer, commits and audits to
+  net-async-mikrotik-release-manager; follow .claude/rules/net-async-mikrotik-rules.md.
+  Never release, never talk to a real router. Cross-repo work is a ticket on the
+  other repo's board, never a direct edit.
