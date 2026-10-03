@@ -83,7 +83,7 @@ failure is L<Net::Async::HTTP>'s, unchanged, message and category and details
 Two failures are this module's own, both before anything is sent: an https
 request when L<IO::Async::SSL> cannot be loaded (see L</http>), and a request
 while the default C<http> is not in a loop. Every one of these arrives as a
-failed Future; no method dies synchronously once the object is constructed.
+failed Future; none of the request methods dies synchronously.
 Constructing or reconfiguring it with invalid arguments - a missing C<host>,
 a C<scheme> other than C<http>/C<https> - C<croak>s immediately with
 L<WWW::MikroTik>'s constructor error, because the internal client is built

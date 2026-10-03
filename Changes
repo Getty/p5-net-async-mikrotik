@@ -1,0 +1,22 @@
+Revision history for Net-Async-MikroTik
+
+{{$NEXT}}
+    - Initial release
+    - Net::Async::MikroTik: an IO::Async::Notifier client for the MikroTik
+      RouterOS REST API on Net::Async::HTTP, with WWW::MikroTik's
+      constructor arguments and defaults
+    - request, get, put, patch, delete, post, list, add, set, remove, cmd and
+      print with WWW::MikroTik's signatures, each returning a Future
+    - Transport only: an internal WWW::MikroTik subclass overrides request
+      alone, so paths, .id escaping, print's .proplist/.query, Basic auth,
+      JSON, error messages and the masked debug log are WWW::MikroTik's own
+      (build_request / parse_response, released together with
+      WWW::MikroTik 0.001)
+    - No request method dies: a router error or a non-JSON body fails the
+      Future with WWW::MikroTik's message, a Net::Async::HTTP transport
+      failure passes through unchanged
+    - An https request fails at once, naming IO::Async::SSL, when that module
+      cannot be loaded, instead of leaving later requests hanging
+    - http attribute as the transport seam; the default is a Net::Async::HTTP
+      child notifier with timeout, verify_ssl as SSL_verify_mode, and no
+      redirects followed
