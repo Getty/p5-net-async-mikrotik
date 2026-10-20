@@ -70,7 +70,7 @@ A request fails its Future in one of two shapes:
 
 =over 4
 
-=item * The router answered, with a status of 400 or higher or with a body
+=item * The router answered, with a status of 300 or higher or with a body
 that is not JSON: the failure is the message L<WWW::MikroTik> would C<croak>
 with, C<< WWW::MikroTik: <status> <message>: <detail> >> and its variants.
 
@@ -280,9 +280,10 @@ test suite uses to run without a router.
 Unless given, built on first use: a L<Net::Async::HTTP> with the
 C<user_agent> C<Net-Async-MikroTik/$VERSION>, the L</timeout>,
 C<SSL_verify_mode> from L</verify_ssl>, and C<max_redirects> C<0> (a
-redirect is not followed and fails as a non-JSON response; RouterOS does not
-send one). It becomes a child notifier of this object, so it joins the loop
-when this object is added - make requests only after C<< $loop->add($mt) >>,
+redirect is not followed and fails as a status error, like any other answer
+from 300 upwards; RouterOS does not send one). It becomes a child notifier
+of this object, so it joins the loop when this object is added - make
+requests only after C<< $loop->add($mt) >>,
 otherwise they fail. Reconfiguring C<timeout> or C<verify_ssl> to a
 different value replaces it and removes the old one from the loop, closing
 its connections: a request still in flight on it fails with
