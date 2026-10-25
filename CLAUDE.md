@@ -13,8 +13,8 @@ mock-driven and needs no router. Never `dzil release` without explicit permissio
 ## Delegation
 
 Delegate behavior-relevant code to the right agent instead of touching it yourself —
-the principle, the lanes and this repo's hazards are in
-`.claude/rules/net-async-mikrotik-rules.md`.
+the delegation lock is a shared house rule (skilletor bundle `getty-cpan-dist@getty`); the
+lanes and this repo's hazards are in `.claude/rules/net-async-mikrotik-rules.md`.
 
 | Task | Agent |
 |---|---|
