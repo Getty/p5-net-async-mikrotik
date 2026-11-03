@@ -34,30 +34,68 @@ sub _done { my ( $f ) = @_; wait_for_future($f); return $f }
 
 my $base = 'https://router.example/rest';
 
-subtest 'set/remove: the id is one escaped path segment, * stays literal' => sub {
-  my @segments = (
-    [ 'hash',          'vlan#1',    'vlan%231' ],
-    [ 'question mark', 'a?b',       'a%3Fb' ],
-    [ 'percent',       '50%off',    '50%25off' ],
-    [ 'space',         'my bridge', 'my%20bridge' ],
-    [ 'star',          '*1A',       '*1A' ],
-    [ 'star with hash', '*1#A',     '*1%23A' ]
+# RouterOS 7.18.2 decodes no percent-escapes in the REST path, so WWW::MikroTik
+# refuses a record name that has to be escaped before anything is sent. The
+# refusal reaches the caller as a failed Future, never as a die.
+
+subtest 'set/remove: an addressable id goes out as it is, * stays literal' => sub {
+  my @addressable = (
+    [ 'star id',   '*1A' ],
+    [ 'plain',     'vlan1' ],
+    [ 'dash',      'my-bridge' ],
+    [ 'dot',       'ether0.1' ],
+    [ 'underscore', 'a_b' ],
+    [ 'tilde',     'a~b' ],
+    [ 'digits',    '123' ]
   );
-  for my $case (@segments) {
-    my ( $name, $id, $escaped ) = @$case;
+  for my $case (@addressable) {
+    my ( $name, $id ) = @$case;
     my ( $mt, $http ) = _nam(
-      'PATCH /rest/interface/'.$escaped  => { name => 'x' },
-      'DELETE /rest/interface/'.$escaped => HTTP::Response->new(200)
+      'PATCH /rest/interface/'.$id  => { name => 'x' },
+      'DELETE /rest/interface/'.$id => HTTP::Response->new(200)
     );
 
-    ok _done( $mt->set( '/interface', $id, comment => 'x' ) )->is_done, $name.': set hit the escaped route';
-    ok _done( $mt->remove( '/interface', $id ) )->is_done, $name.': remove hit the escaped route';
+    ok _done( $mt->set( '/interface', $id, comment => 'x' ) )->is_done, $name.': set hit the route';
+    ok _done( $mt->remove( '/interface', $id ) )->is_done, $name.': remove hit the route';
 
     for my $req ( @{ $http->requests } ) {
-      is $req->uri->as_string, $base.'/interface/'.$escaped, $name.': '.$req->method.' URL';
+      is $req->uri->as_string, $base.'/interface/'.$id, $name.': '.$req->method.' URL';
       is $req->uri->query, undef, $name.': no query string from the id';
       is $req->uri->fragment, undef, $name.': no fragment from the id';
     }
+    $loop->remove($mt);
+  }
+};
+
+subtest 'set/remove: a name that has to be escaped fails the Future, nothing is sent' => sub {
+  my @reserved = (
+    [ 'hash',           'vlan#1' ],
+    [ 'question mark',  'a?b' ],
+    [ 'percent',        '50%off' ],
+    [ 'space',          'my bridge' ],
+    [ 'slash',          'a/b' ],
+    [ 'star with hash', '*1#A' ]
+  );
+  for my $case (@reserved) {
+    my ( $name, $id ) = @$case;
+    my ( $mt, $http ) = _nam(
+      'PATCH /rest/interface/x'  => { name => 'x' },
+      'DELETE /rest/interface/x' => HTTP::Response->new(200)
+    );
+
+    for my $verb ( [ set => 'comment', 'x' ], [ remove => ] ) {
+      my ( $method, @args ) = @$verb;
+      my $f;
+      ok eval { $f = $mt->$method( '/interface', $id, @args ); 1 }, $name.': '.$method.' does not die';
+      _done($f);
+      ok $f->is_failed, $name.': '.$method.' fails the Future';
+      my $err = $f->is_failed ? $f->failure : '';
+      like $err, qr/\AWWW::MikroTik: cannot address the record \Q$id\E by name/, $name.': '.$method.' names the record';
+      like $err, qr/RouterOS 7\.18\.2/, $name.': the measured RouterOS version';
+      like $err, qr/percent-escape/i, $name.': the reason';
+      like $err, qr/by its \.id/, $name.': the way out';
+    }
+    is scalar @{ $http->requests }, 0, $name.': nothing was sent';
     $loop->remove($mt);
   }
 };

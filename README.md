@@ -80,6 +80,13 @@ $mt->remove('/ip/address', '*9')->then(sub {
 })->get;
 ```
 
+`set` and `remove` address a record by its `.id` (`*1A`) or by a name made of
+unreserved characters alone (`A-Z`, `a-z`, `0-9`, `-`, `.`, `_`, `~`).
+RouterOS 7.18.2 decodes no percent-escapes in the REST path, so a name that
+has to be escaped (a space, a `/`, a `#`, a `%`) is not found by the router:
+`WWW::MikroTik` refuses it before anything is sent, and the `Future` fails
+with its message, which names the `.id` as the way to address the record.
+
 ## Errors
 
 None of the request methods dies; every failure is a failed `Future`:
@@ -87,6 +94,8 @@ None of the request methods dies; every failure is a failed `Future`:
 - the router answered with status 400 or higher, or with a body that is not
   JSON: the failure is the message `WWW::MikroTik` would croak with,
   `WWW::MikroTik: <status> <message>: <detail>`;
+- `set` or `remove` with a record name that has to be escaped: the message
+  `WWW::MikroTik` would croak with, before anything is sent;
 - no answer (connection refused, TLS, timeout): `Net::Async::HTTP`'s failure,
   unchanged;
 - an https request while `IO::Async::SSL` cannot be loaded fails at once,

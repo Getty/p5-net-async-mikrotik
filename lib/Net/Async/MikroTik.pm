@@ -452,8 +452,13 @@ sub set { shift->_forward( set => @_ ) }
 
     my $f = $mt->set('/ip/address', $rec->{'.id'}, comment => 'uplink');
 
-Future of the full updated record; C<$id> is one escaped path segment as in
-L<WWW::MikroTik/set>.
+Future of the full updated record. C<$id> goes into the URL as one path segment
+as in L<WWW::MikroTik/set>. RouterOS 7.18.2 decodes no percent-escapes in the
+REST path, so a name that has to be escaped (a space, a slash, a C<#>, a C<%>)
+is not addressable: the Future fails with L<WWW::MikroTik>'s message, which
+names the C<.id> as the way to address the record, and nothing is sent. A name
+of unreserved characters alone (C<A-Z>, C<a-z>, C<0-9>, C<->, C<.>, C<_>,
+C<~>) and the C<.id> itself are addressable.
 
 =cut
 
@@ -463,7 +468,9 @@ sub remove { shift->_forward( remove => @_ ) }
 
     my $f = $mt->remove('/ip/address', $rec->{'.id'});
 
-Future that resolves with no value on success. L<WWW::MikroTik/remove>.
+Future that resolves with no value on success. A name that has to be escaped
+fails the Future before anything is sent, as under L</set>.
+L<WWW::MikroTik/remove>.
 
 =cut
 

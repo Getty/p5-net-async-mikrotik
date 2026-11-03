@@ -17,6 +17,11 @@ Revision history for Net-Async-MikroTik
       failure passes through unchanged
     - An https request fails at once, naming IO::Async::SSL, when that module
       cannot be loaded, instead of leaving later requests hanging
+    - set and remove address a record by its .id or by a name of unreserved
+      characters (A-Z, a-z, 0-9, - . _ ~): RouterOS 7.18.2 decodes no
+      percent-escapes in the REST path, so a name that has to be escaped is
+      refused before anything is sent, with WWW::MikroTik's message naming
+      the .id as the way to address the record; the Future fails, nothing dies
     - http attribute as the transport seam; the default is a Net::Async::HTTP
       child notifier with timeout, verify_ssl as SSL_verify_mode, and no
       redirects followed
